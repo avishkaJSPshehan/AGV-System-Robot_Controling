@@ -54,7 +54,7 @@ class HomePage(ctk.CTkFrame):
         # ======== Footer ========
         self.footer_label = ctk.CTkLabel(
             self,
-            text="Created by Avishka Shehan | © All Rights Reserved",
+            text="Created by Heshala Angage | © All Rights Reserved",
             font=ctk.CTkFont(size=12),
             text_color="gray"
         )
