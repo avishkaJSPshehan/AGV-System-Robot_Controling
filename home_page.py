@@ -1,15 +1,18 @@
 import customtkinter as ctk
 from tkinter import CENTER
+import threading
+import requests
+import time
 
 class HomePage(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
 
-        # ======== Status Label (Top Right) ========
+        # ======== Status Label ========
         self.status_label = ctk.CTkLabel(
             self,
-            text="Status: Running",
-            text_color="#00FF7F",
+            text="Status: Disconnected",
+            text_color="red",
             font=ctk.CTkFont(size=14, weight="bold")
         )
         self.status_label.place(relx=0.95, rely=0.05, anchor="ne")
@@ -60,11 +63,41 @@ class HomePage(ctk.CTkFrame):
         )
         self.footer_label.place(relx=0.5, rely=0.95, anchor=CENTER)
 
+        # ======== ESP32 Wi-Fi Config ========
+        self.esp32_ip = "172.20.10.3"  # 🔧 Change this to your ESP32 IP
+        self.keep_checking = True
+
+        # ======== Start Wi-Fi Thread ========
+        threading.Thread(target=self.check_esp32_status, daemon=True).start()
+
+    # ======== Poll ESP32 via Wi-Fi ========
+    def check_esp32_status(self):
+        while self.keep_checking:
+            try:
+                url = f"http://{self.esp32_ip}/"
+                response = requests.get(url, timeout=2)
+                if response.text.strip() == "Connected":
+                    self.update_status(True)
+                else:
+                    self.update_status(False)
+            except requests.RequestException:
+                self.update_status(False)
+
+            time.sleep(3)  # Check every 3 seconds
+
+    # ======== Update GUI Label ========
+    def update_status(self, connected):
+        color = "#00FF7F" if connected else "red"
+        text = "Status: Connected" if connected else "Status: Disconnected"
+        self.status_label.configure(text=text, text_color=color)
+
     # ======== Navigation Functions ========
     def open_auto(self):
-        """Navigate to Auto Mode Page"""
         self.master.show_auto_page()
 
     def open_manual(self):
-        """Navigate to Manual Mode Page"""
         self.master.show_manual_page()
+
+    def destroy(self):
+        self.keep_checking = False
+        super().destroy()
